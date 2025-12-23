@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PWSA&RDS — Predictive Women Safety Alert & Risk Detection System</title>
+  <meta name="description" content="AI-powered women safety alert & risk detection system — Predicting danger before it happens." />
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+
+  <style>
+    :root{
+      --bg-0:#0a0f2b;
+      --bg-1:#11184a;
+      --bg-2:#1b1f63;
+      --accent:#7b61ff;
+      --accent-2:#9a4dff;
+      --text:#ffffff;
+      --muted:#cbd3ff;
+      --success:#35d07f;
+      --warning:#ffd166;
+      --danger:#ff5c7a;
+      --card:#121634cc;
+      --border:#2c3270;
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --radius:16px;
+      --radius-sm:12px;
+      --radius-xs:10px;
+      --maxw:1100px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% 10%, #171d52 0%, transparent 60%),
+        radial-gradient(800px 400px at 90% 0%, #2a216d 0%, transparent 60%),
+        linear-gradient(135deg, var(--bg-0), var(--bg-2));
+      overflow-x:hidden;
+      scroll-behavior:smooth;
+    }
+
+#destination:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+
+
+.leaflet-interactive {
+  filter: blur(0.3px);
+}
+
+
+    a{color:var(--text); text-decoration:none}
+    .container{max-width:var(--maxw); margin:0 auto; padding:0 24px}
+    header.nav{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter:saturate(140%) blur(12px);
+      background:linear-gradient(180deg, rgba(10,15,43,0.8), rgba(10,15,43,0.5));
+      border-bottom:1px solid var(--border);
+    }
+    .nav-inner{
+      display:flex; align-items:center; justify-content:space-between;
+      height:64px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:0.2px;
+    }
+    .brand-badge{
+      width:36px; height:36px; border-radius:50%;
+      background: conic-gradient(from 180deg, var(--accent), var(--accent-2), var(--accent));
+      display:grid; place-items:center; box-shadow:var(--shadow);
+    }
+    .brand-badge svg{width:20px; height:20px}
+    .nav-links{display:flex; gap:18px; flex-wrap:wrap}
+    .nav-links a{
+      padding:8px 12px; border-radius:10px; color:var(--muted);
+      transition:color .2s, background .2s;
+    }
+    .nav-links a:hover{color:var(--text); background:#1a2158}
+    .cta{
+      display:flex; gap:10px;
+    }
+    .btn{
+      display:inline-flex; align-items:center; gap:10px; padding:12px 16px;
+      border-radius:12px; border:1px solid var(--border); background:#141a4c; color:var(--text);
+      box-shadow:0 8px 16px rgba(0,0,0,.25); transition:transform .15s, box-shadow .2s, background .2s, border .2s;
+    }
+    .btn svg{width:18px; height:18px}
+    .btn-primary{background:linear-gradient(135deg, var(--accent), var(--accent-2)); border-color:transparent}
+    .btn:hover{transform:translateY(-2px); box-shadow:0 14px 24px rgba(0,0,0,.35)}
+    .btn-outline{background:transparent}
+    .hero{
+      position:relative; padding:90px 0 60px;
+    }
+    .hero-grid{
+      display:grid; grid-template-columns:1.15fr 0.85fr; gap:36px; align-items:center;
+    }
+    .headline{
+      font-size:clamp(28px, 4.6vw, 52px); font-weight:800; line-height:1.08;
+      background:linear-gradient(90deg, #fff, #c8c7ff);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      margin:10px 0 14px;
+    }
+    .subhead{color:var(--muted); font-weight:600; font-size:clamp(14px, 2.4vw, 18px)}
+    .hero-card{
+      background:rgba(18,22,52,.6); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; box-shadow:var(--shadow);
+    }
+    .hero-stats{
+      display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-top:14px;
+    }
+    .stat{
+      background:#121840; border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px;
+      display:flex; align-items:center; gap:12px;
+    }
+    .stat b{font-size:18px}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px; padding:8px 10px;
+      border-radius:999px; font-size:12px; color:#e8e6ff; background:#1a2158; border:1px solid var(--border)
+    }
+    .section{
+      padding:60px 0;
+    }
+    .section h2{
+      font-size:28px; margin:0 0 10px; letter-spacing:.2px
+    }
+    .section p{color:var(--muted)}
+    .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:22px}
+    .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:22px}
+    .grid-4{display:grid; grid-template-columns:repeat(4,1fr); gap:22px}
+    .card{
+      background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:22px;
+      box-shadow:var(--shadow);
+    }
+    .card h3{margin:0 0 8px}
+    .label{font-size:12px; letter-spacing:.6px; color:#b9bfff; text-transform:uppercase}
+    .icon{
+      width:38px; height:38px; border-radius:10px; display:grid; place-items:center; margin-right:10px;
+      background:linear-gradient(135deg,#2431a6,#5126bf); border:1px solid #3a45a8;
+    }
+    .inline{display:flex; align-items:center}
+    .tag-row{display:flex; gap:10px; flex-wrap:wrap}
+    .callouts{display:flex; gap:12px; flex-wrap:wrap}
+    .callouts .btn{padding:10px 14px}
+    .step{
+      display:flex; align-items:flex-start; gap:16px; padding:14px; border-radius:12px;
+      background:#131a49; border:1px solid var(--border)
+    }
+    .step .number{
+      width:30px; height:30px; border-radius:8px; font-weight:700; display:grid; place-items:center;
+      background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#0a0930;
+    }
+    .badge{
+      display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:999px;
+      background:#141b4f; border:1px solid var(--border); font-size:12px; color:#e3e0ff;
+    }
+    .risk-safe{background:#132b22; border-color:#1f6a4f; color:#b7ffda}
+    .risk-mod{background:#2b2613; border-color:#b59629; color:#ffe9ac}
+    .risk-high{background:#2b1320; border-color:#a23c5a; color:#ffc0cb}
+    .stack{
+      display:flex; gap:10px; flex-wrap:wrap
+    }
+    .stack .item{
+      background:#141a4c; border:1px solid var(--border); border-radius:12px; padding:10px 12px; color:#e8e6ff;
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    .foot{
+      text-align:center; color:#cfd6ff; padding:24px 0; border-top:1px solid var(--border);
+    }
+    .split{
+      display:grid; grid-template-columns:1fr 1fr; gap:22px
+    }
+    .list{
+      display:grid; gap:12px
+    }
+    .list .row{
+      display:flex; align-items:flex-start; gap:12px; padding:12px; border:1px dashed #2d3474; border-radius:12px;
+      background:#12184a
+    }
+    .list .row .emoji{
+      width:34px; height:34px; display:grid; place-items:center; border-radius:10px; background:#1a2158
+    }
+    .footer-brand{
+      display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:6px
+    }
+    .team{
+      margin-top:10px; font-size:14px; color:#a9b3ff
+    }
+    .tos{
+      margin-top:12px; font-size:12px; color:#7f88c9
+    }
+    .anchor-grid{
+      display:flex; gap:12px; flex-wrap:wrap; margin-top:18px
+    }
+    .nav-mobile{
+      display:none
+    }
+    /* scroll reveal */
+    .reveal{opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease}
+    .reveal.visible{opacity:1; transform:translateY(0)}
+    /* responsive */
+    @media (max-width:960px){
+      .hero-grid{grid-template-columns:1fr}
+      .grid-2{grid-template-columns:1fr}
+      .grid-3{grid-template-columns:1fr 1fr}
+      .grid-4{grid-template-columns:1fr 1fr}
+      .split{grid-template-columns:1fr}
+    }
+    @media (max-width:640px){
+      .nav-links{display:none}
+      .nav-mobile{display:flex; gap:10px}
+      .hero{padding:64px 0 40px}
+      .grid-3{grid-template-columns:1fr}
+      .grid-4{grid-template-columns:1fr}
+      .cta{flex-wrap:wrap}
+    }
+   .btn, a.btn, button {
+   cursor: pointer;
+   }
+
+@keyframes sosFlash {
+  0% { background-color: rgba(255, 92, 122, 0.15); }
+  50% { background-color: rgba(255, 92, 122, 0.35); }
+  100% { background-color: rgba(255, 92, 122, 0.15); }
+}
+
+
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="nav">
+    <div class="container nav-inner">
+      <div class="brand">
+        <div class="brand-badge" aria-hidden="true">
+          <!-- Shield + signal icon -->
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 3l6 3v4c0 5-3.2 8.4-6 9.9C9.2 18.4 6 15 6 10V6l6-3Z" stroke="#0b0a2e" fill="#ffffff"/>
+            <path d="M8 10a4 4 0 118 0" stroke="#7b61ff" stroke-width="2" />
+            <circle cx="12" cy="10" r="1.8" fill="#9a4dff"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:15px; color:#cbd3ff">TEAM NAVTECH</div>
+          <div style="font-size:12px; color:#9aa5ff">Ideathon 2025</div>
+        </div>
+      </div>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#hero">Home</a>
+        <a href="#problem">Problem</a>
+        <a href="#solution">Solution</a>
+        <a href="#flow">How it works</a>
+        <a href="#tech">Technology</a>
+        <a href="#impact">Impact</a>
+        <a href="#future">Future scope</a>
+      </nav>
+      <div class="nav-mobile">
+        <a class="btn btn-outline" href="#solution">View solution</a>
+        <a class="btn btn-primary" href="#flow">How it works</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section id="hero" class="hero container">
+    <div class="hero-grid">
+      <div>
+        <div class="pill inline">
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 2l9 5v6c0 6.5-4.7 10.7-9 12-4.3-1.3-9-5.5-9-12V7l9-5Z" stroke="#6e5bff" fill="#1b215f"/>
+            </svg>
+          </span>
+          <span>Predictive Women Safety Alert & Risk Detection System</span>
+        </div>
+        <h1 class="headline">Predicting danger before it happens</h1>
+        <p class="subhead">AI-powered women safety alert & risk detection system that warns you before entering risk-prone areas.</p>
+        <div class="anchor-grid">
+          <a class="btn btn-primary" href="#solution">
+            <!-- spark icon -->
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 2v6M12 16v6M2 12h6M16 12h6M5 5l4 4M15 15l4 4M19 5l-4 4M9 15l-4 4" stroke="#0a0930" stroke-width="2"/></svg>
+            View solution
+          </a>
+          <a class="btn" href="#flow">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 12h16M12 4l8 8-8 8" stroke="#cbd3ff" stroke-width="2"/></svg>
+            How it works
+          </a>
+        </div>
+
+        <div class="hero-card reveal" style="margin-top:18px">
+          <div class="tag-row">
+            <span class="badge"><strong>AI:</strong> Risk prediction</span>
+            <span class="badge"><strong>GPS:</strong> NavIC + satellite</span>
+            <span class="badge"><strong>IoT:</strong> VoWiFi + rural-ready</span>
+          </div>
+          <div class="hero-stats">
+            <div class="stat">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l9 5-9 5-9-5 9-5Z" fill="#7b61ff"/><path d="M21 7v10l-9 5-9-5V7" stroke="#a595ff"/></svg>
+              </div>
+              <div>
+                <div class="label">Mode</div>
+                <b>Predictive alerts</b>
+              </div>
+            </div>
+            <div class="stat">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="#9a4dff" stroke-width="2"/><path d="M12 8v4l3 3" stroke="#7b61ff" stroke-width="2"/></svg>
+              </div>
+              <div>
+                <div class="label">Response</div>
+                <b>One‑tap SOS</b>
+              </div>
+            </div>
+            <div class="stat">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="4" stroke="#7b61ff"/><path d="M8 12h8" stroke="#a595ff" stroke-width="2"/></svg>
+              </div>
+              <div>
+                <div class="label">Privacy</div>
+                <b>Zero data access</b>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Placeholder visual -->
+      <div class="card reveal">
+        <h3 style="margin-top:0">Live risk map</h3>
+        <p class="subhead" style="font-size:14px">Your route is analyzed in real time using location, time, and local incident patterns.</p>
+      <input id="destination" disabled
+  placeholder="Click on map to choose destination"
+  style="width:100%; padding:10px; border-radius:10px; margin-bottom:8px;
+  border:1px solid var(--border); background:#0f1440; color:white;">
+
+
+
+<div id="map"
+style="height:260px; border-radius:12px; border:1px solid var(--border)">
+</div>
+
+
+<!-- STATUS BOX (ADD THIS) -->
+<div id="statusBox"
+style="
+margin-top:10px;
+padding:10px 12px;
+border-radius:10px;
+background:#121840;
+border:1px solid var(--border);
+font-size:13px;
+color:#cbd3ff;
+display:none;
+">
+</div>
+
+
+        <div class="callouts" style="margin-top:14px">
+          <a class="btn">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 12h16M12 4l8 8-8 8" stroke="#cbd3ff" stroke-width="2"/></svg>
+            Simulate route
+          </a>
+          <a class="btn">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 6v12M6 12h12" stroke="#cbd3ff" stroke-width="2"/></svg>
+            Share live location
+          </a>
+          <a class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 5l7 7-7 7-7-7 7-7Z" stroke="#0a0930" stroke-width="2"/></svg>
+            One‑click SOS
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Problem Statement -->
+  <section id="problem" class="section">
+    <div class="container grid-2">
+      <div class="reveal">
+        <h2>Problem statement</h2>
+        <p>Women often face unsafe situations during night travel and in isolated or poorly lit areas. Delayed help, lack of context-aware guidance, and uncertainty about local risk levels increase exposure to potential harm.</p>
+        <div class="list">
+          <div class="row">
+            <div class="emoji">🌙</div>
+            <div>
+              <b>Night travel risks:</b>
+              <p class="muted">Lower visibility, sparse crowd presence, and limited transport options raise vulnerability.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="emoji">📍</div>
+            <div>
+              <b>Isolated zones:</b>
+              <p class="muted">Pockets with historically higher incidents are hard to identify in real time.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="emoji">⚠️</div>
+            <div>
+              <b>Limitations of existing apps:</b>
+              <p class="muted">Most tools are reactive—help is triggered after danger occurs, not before.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card reveal">
+        <h3>Why reactive isn’t enough</h3>
+        <p>When alerts rely solely on user distress or post-incident reporting, valuable seconds are lost. Proactive guidance can steer users away from risk before exposure.</p>
+        <div class="grid-3" style="margin-top:12px">
+          <div class="step"><div class="number">1</div><div><b>Late alerts</b><p class="muted">Help comes after risk has materialized.</p></div></div>
+          <div class="step"><div class="number">2</div><div><b>No risk context</b><p class="muted">Users aren’t warned about risky areas ahead.</p></div></div>
+          <div class="step"><div class="number">3</div><div><b>Slow routing</b><p class="muted">Routes don’t adapt to local incident trends.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Proposed Solution -->
+  <section id="solution" class="section">
+    <div class="container grid-2">
+      <div class="reveal">
+        <h2>Proposed solution</h2>
+        <p>An AI-powered mobile app that predicts unsafe zones using crime data, GPS, time of day, and movement patterns. The system sends alerts before entering danger zones and recommends safer paths.</p>
+        <div class="stack" style="margin-top:10px">
+          <span class="item"><span class="icon" aria-hidden="true">🧠</span>AI risk scoring</span>
+          <span class="item"><span class="icon" aria-hidden="true">📡</span>NavIC GPS + satellite</span>
+          <span class="item"><span class="icon" aria-hidden="true">🛰️</span>Rural-ready VoWiFi</span>
+          <span class="item"><span class="icon" aria-hidden="true">🔒</span>Privacy-first design</span>
+        </div>
+        <div class="callouts" style="margin-top:14px">
+          <a class="btn btn-primary" href="#flow">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 12h16M12 4l8 8-8 8" stroke="#0a0930" stroke-width="2"/></svg>
+            See step flow
+          </a>
+          <a class="btn" href="#impact">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 18l6-12 6 12H6Z" stroke="#cbd3ff" stroke-width="2"/></svg>
+            Explore impact
+          </a>
+        </div>
+      </div>
+      <div class="card reveal">
+        <h3>What makes it different</h3>
+        <p>Instead of waiting for an SOS, the app quantifies area-level risk ahead of time and nudges users with route alternatives and live-sharing prompts.</p>
+        <div class="grid-3" style="margin-top:12px">
+          <div class="step"><div class="number">A</div><div><b>Predictive alerts</b><p class="muted">Anticipate risk using multi-source signals.</p></div></div>
+          <div class="step"><div class="number">B</div><div><b>Context-aware</b><p class="muted">Time, movement, and local history matter.</p></div></div>
+          <div class="step"><div class="number">C</div><div><b>Seamless action</b><p class="muted">One-tap SOS and live location sharing.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section id="flow" class="section">
+    <div class="container split">
+      <div class="reveal">
+        <h2>How it works</h2>
+        <div class="list">
+          <div class="row">
+            <div class="emoji">👣</div>
+            <div>
+              <b>User enters an area</b>
+              <p class="muted">The app continuously evaluates surroundings as you travel.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="emoji">🧠</div>
+            <div>
+              <b>AI risk analysis</b>
+              <p class="muted">Signals from crime data, GPS accuracy, time, and movement patterns feed a risk model.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="emoji">🛡️</div>
+            <div>
+              <b>Zone rating</b>
+              <p class="muted">Areas are labeled as <span class="badge risk-safe">Safe</span>, <span class="badge risk-mod">Moderate</span>, or <span class="badge risk-high">High risk</span>.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="emoji">⚡</div>
+            <div>
+              <b>Actions</b>
+              <p class="muted">The app prompts safer route suggestions, live location sharing, one-click SOS, and alerts to police/emergency contacts.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card reveal">
+        <h3>Guided actions</h3>
+        <div class="grid-3">
+          <div class="step"><div class="number">1</div><div><b>Safe route suggestion</b><p class="muted">Detours proactively to safer corridors.</p></div></div>
+          <div class="step"><div class="number">2</div><div><b>Live location sharing</b><p class="muted">Share ETA and live path with trusted contacts.</p></div></div>
+          <div class="step"><div class="number">3</div><div><b>One-click SOS</b><p class="muted">Trigger assistance with audio/visual signals.</p></div></div>
+          <div class="step"><div class="number">4</div><div><b>Police & emergency alerts</b><p class="muted">Notify nearby responders with context.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Technology Stack -->
+  <section id="tech" class="section">
+    <div class="container grid-2">
+      <div class="reveal">
+        <h2>Technology stack</h2>
+        <div class="list">
+          <div class="row">
+            <div class="emoji">📱</div>
+            <div>
+              <b>Frontend: Android App UI</b>
+              <p class="muted">Material design components with offline-first interactions for reliability.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="emoji">🗄️</div>
+            <div>
+              <b>Backend: Node.js / Django ORM / MySQL</b>
+              <p class="muted">Scalable APIs, relational storage, and secure data access layers.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="emoji">🧠</div>
+            <div>
+              <b>AI/ML: Python, PyTorch, Scikit‑learn</b>
+              <p class="muted">Hybrid models for risk scoring, anomaly detection, and continuous learning.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="emoji">🛰️</div>
+            <div>
+              <b>Navigation: NavIC GPS, VoWiFi, satellite support</b>
+              <p class="muted">Operates even in rural & low-network environments with sensor fusion.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card reveal">
+        <h3>Built for reliability</h3>
+        <div class="grid-3">
+          <div class="step"><div class="number">A</div><div><b>Offline modes</b><p class="muted">Cached maps and last-known risk scores.</p></div></div>
+          <div class="step"><div class="number">B</div><div><b>Edge scoring</b><p class="muted">On-device computation reduces latency.</p></div></div>
+          <div class="step"><div class="number">C</div><div><b>Failover</b><p class="muted">VoWiFi and satellite link preferences in weak coverage.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Innovation & Feasibility -->
+  <section id="innovation" class="section">
+    <div class="container grid-2">
+      <div class="reveal">
+        <h2>Innovation & feasibility</h2>
+        <p>Predictive alerts replace reactive help, enabling users to avoid unsafe zones before exposure. Real-time area risk mapping blends historical incident data with current context for timely guidance.</p>
+        <div class="list" style="margin-top:12px">
+          <div class="row">
+            <div class="emoji">🔮</div>
+            <div>
+              <b>Predictive alerts</b>
+              <p class="muted">Risk forecasts and proactive nudges, not just panic responses.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="emoji">🗺️</div>
+            <div>
+              <b>Real-time mapping</b>
+              <p class="muted">Dynamic zone scoring for safer routing.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="emoji">🔏</div>
+            <div>
+              <b>Privacy-first design</b>
+              <p class="muted">Even developers can’t access user personal data; on-device processing keeps sensitive context local.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card reveal">
+        <h3>Feasibility checkpoints</h3>
+        <div class="grid-3">
+          <div class="step"><div class="number">1</div><div><b>Data availability</b><p class="muted">City/state incident datasets + user-consented signals.</p></div></div>
+          <div class="step"><div class="number">2</div><div><b>Model alignment</b><p class="muted">Risk models benchmarked with ground truth.</p></div></div>
+          <div class="step"><div class="number">3</div><div><b>Coverage</b><p class="muted">NavIC+GPS fusion improves rural reliability.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Impact & Applications -->
+  <section id="impact" class="section">
+    <div class="container grid-2">
+      <div class="reveal">
+        <h2>Impact & applications</h2>
+        <div class="grid-3">
+          <div class="card">
+            <div class="inline">
+              <div class="icon" aria-hidden="true">⚡</div>
+              <div>
+                <b>Early risk detection</b>
+                <p class="muted">Warns before entering danger zones.</p>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="inline">
+              <div class="icon" aria-hidden="true">🛡️</div>
+              <div>
+                <b>Reduced exposure</b>
+                <p class="muted">Safer route suggestions minimize time in high-risk areas.</p>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="inline">
+              <div class="icon" aria-hidden="true">🚑</div>
+              <div>
+                <b>Faster response</b>
+                <p class="muted">One-tap SOS + context for responders.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <h3 style="margin-top:18px">Use cases</h3>
+        <div class="stack">
+          <span class="item">🎓 Students</span>
+          <span class="item">👩‍💼 Working women</span>
+          <span class="item">🌃 Night travel</span>
+          <span class="item">🏙️ Smart cities</span>
+        </div>
+      </div>
+      <div class="card reveal">
+        <h3>Measurable outcomes</h3>
+        <div class="grid-3">
+          <div class="step"><div class="number">A</div><div><b>Time-to-alert</b><p class="muted">Lead time before entering risky areas.</p></div></div>
+          <div class="step"><div class="number">B</div><div><b>Route safety score</b><p class="muted">Composite indicator for path selection.</p></div></div>
+          <div class="step"><div class="number">C</div><div><b>Response latency</b><p class="muted">SOS to assistance time tracked.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Future Scope -->
+  <section id="future" class="section">
+    <div class="container grid-2">
+      <div class="reveal">
+        <h2>Future scope</h2>
+        <div class="list">
+          <div class="row">
+            <div class="emoji">⌚</div>
+            <div>
+              <b>Wearable & voice-activated SOS</b>
+              <p class="muted">Hands-free triggers via wearables and voice keywords.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="emoji">🗃️</div>
+            <div>
+              <b>Nationwide crime database integration</b>
+              <p class="muted">Standardized feeds to improve risk coverage and accuracy.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="emoji">📈</div>
+            <div>
+              <b>Real-time AI model improvements</b>
+              <p class="muted">Continuous learning with safe, anonymized aggregates.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card reveal">
+        <h3>Roadmap highlights</h3>
+        <div class="grid-3">
+          <div class="step"><div class="number">Q1</div><div><b>Pilot cities</b><p class="muted">City-level datasets and field tests.</p></div></div>
+          <div class="step"><div class="number">Q2</div><div><b>Wearable API</b><p class="muted">Integrations with popular devices.</p></div></div>
+          <div class="step"><div class="number">Q3</div><div><b>Nationwide rollout</b><p class="muted">Scale risk feeds and responder network.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="foot">
+    <div class="footer-brand">
+      <div class="brand-badge" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 3l6 3v4c0 5-3.2 8.4-6 9.9C9.2 18.4 6 15 6 10V6l6-3Z" stroke="#0b0a2e" fill="#ffffff"/>
+          <path d="M8 10a4 4 0 118 0" stroke="#7b61ff" stroke-width="2" />
+          <circle cx="12" cy="10" r="1.8" fill="#9a4dff"/>
+        </svg>
+      </div>
+      <div><b>Predictive Women Safety Alert & Risk Detection System</b></div>
+    </div>
+    <div>Built for safety. Powered by AI.</div>
+    <div class="team">Team NAVTECH — Team Leader: Poorvi Gupta</div>
+    <div class="tos">This is a concept demo site for judges, mentors, and the public.</div>
+  </footer>
+
+  <script>
+let safetyCheckInterval = null;
+let safetyTimeout = null;
+const SAFETY_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes
+const RESPONSE_WINDOW_MS = 30 * 1000;     // 30 seconds to respond
+
+    // Smooth reveal on scroll
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if(e.isIntersecting){ e.target.classList.add('visible'); }
+      });
+    }, {threshold:0.12});
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // In-page anchor focus for accessibility
+    document.querySelectorAll('a[href^="#"]').forEach(a=>{
+      a.addEventListener('click', e=>{
+        const id = a.getAttribute('href').slice(1);
+        const tgt = document.getElementById(id);
+        if(tgt){
+          e.preventDefault();
+          tgt.scrollIntoView({behavior:'smooth', block:'start'});
+          const focusable = tgt.querySelector('h2, h3, [tabindex]');
+          if(focusable){ focusable.setAttribute('tabindex','-1'); focusable.focus({preventScroll:true}); }
+        }
+      })
+    });
+function askSafetyConfirmation() {
+  statusBox.style.display = "block";
+  statusBox.innerHTML = `
+    🛎️ <b>Safety Check</b><br>
+    Please confirm you are safe.<br><br>
+    <button id="safeYesBtn" class="btn btn-primary">I am safe</button>
+  `;
+
+  // start response countdown
+  safetyTimeout = setTimeout(() => {
+    triggerAutoSOS();
+  }, RESPONSE_WINDOW_MS);
+
+  document.getElementById("safeYesBtn").onclick = () => {
+    clearTimeout(safetyTimeout);
+    statusBox.innerHTML = `
+      ✅ <b>Safety confirmed</b><br>
+      Monitoring continues.
+    `;
+  };
+}
+function triggerAutoSOS() {
+  statusBox.innerHTML = `
+    🚨 <b>No response detected</b><br>
+    Calling emergency contacts...
+  `;
+  triggerSOS();
+}
+
+
+function startSafetyCheck() {
+  // clear old timers
+  clearInterval(safetyCheckInterval);
+  clearTimeout(safetyTimeout);
+
+  safetyCheckInterval = setInterval(() => {
+    askSafetyConfirmation();
+  }, SAFETY_INTERVAL_MS);
+}
+
+
+    // Demo buttons (no-op placeholders)
+    document.querySelectorAll('.callouts .btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> {
+        btn.classList.add('btn-primary');
+        setTimeout(()=>btn.classList.remove('btn-primary'), 600);
+      });
+    });
+
+
+
+const SAFE_PLACES = [
+  { type: "Police Station", icon: "👮", offset: [0.004, 0.002] },
+  { type: "Convenience Store", icon: "🏪", offset: [-0.003, 0.001] },
+  { type: "Hospital", icon: "🏥", offset: [0.002, -0.004] },
+  { type: "Pharmacy", icon: "💊", offset: [-0.002, -0.003] },
+  { type: "Petrol Pump", icon: "⛽", offset: [0.003, -0.001] }
+];
+
+
+
+
+// ================= MAP LOGIC (LEAFLET) =================
+let map;
+let userMarker;
+let destinationMarker;
+let routeLine;
+let dangerLayers = [];
+
+let zoneCenter = null;
+let ZONE_LOCK_RADIUS_KM = 1;
+function routeRiskScore(routeLine) {
+  let score = 0;
+
+  dangerLayers.forEach(zone => {
+    const zoneCenter = zone.getLatLng();
+    const routeBounds = routeLine.getBounds();
+
+    // distance-based influence
+    if (routeBounds.contains(zoneCenter)) {
+      score += zone.getRadius() > 600 ? 20 : 30;
+    }
+  });
+
+  // normalize
+  score = Math.min(85, score + 15);
+
+  return score;
+}
+
+
+
+
+
+
+function distanceKm(a, b) {
+  const R = 6371;
+  const dLat = (b[0]-a[0]) * Math.PI/180;
+  const dLng = (b[1]-a[1]) * Math.PI/180;
+  const lat1 = a[0] * Math.PI/180;
+  const lat2 = b[0] * Math.PI/180;
+
+  return Math.sqrt(
+    dLat*dLat +
+    Math.cos(lat1)*Math.cos(lat2)*dLng*dLng
+  ) * R;
+}
+function drawDangerZones(center) {
+
+  if (zoneCenter && distanceKm(zoneCenter, center) < ZONE_LOCK_RADIUS_KM) {
+    return; // 🔒 DO NOT CHANGE zones
+  }
+
+  zoneCenter = center;
+
+  dangerLayers.forEach(z => map.removeLayer(z));
+  dangerLayers = [];
+
+  const zones = [
+    { dx: 0.006, dy: 0.002, risk: "high" },
+    { dx: -0.005, dy: -0.003, risk: "moderate" },
+    { dx: 0.003, dy: -0.005, risk: "low" },
+    { dx: -0.004, dy: 0.004, risk: "high" }
+  ];
+
+  zones.forEach(z => {
+    let color =
+      z.risk === "high" ? "#ff5c7a" :
+      z.risk === "moderate" ? "#ffd166" : "#35d07f";
+
+    let radius =
+      z.risk === "high" ? 500 :
+      z.risk === "moderate" ? 700 : 900;
+
+    const circle = L.circle([
+      center[0] + z.dx,
+      center[1] + z.dy
+    ], {
+      radius,
+      color,
+      fillColor: color,
+      fillOpacity: 0.25
+    }).addTo(map);
+
+    dangerLayers.push(circle);
+  });
+}
+
+
+const statusBox = document.getElementById("statusBox");
+
+
+function initMap() {
+  // Default view: India
+  map = L.map('map').setView([22.5937, 78.9629], 5);
+
+  // OpenStreetMap tiles
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18
+  }).addTo(map);
+
+  // Get user location
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const userLoc = [pos.coords.latitude, pos.coords.longitude];
+
+      map.setView(userLoc, 13);
+
+      userMarker = L.marker(userLoc)
+        .addTo(map)
+        .bindPopup("Your location")
+        .openPopup();
+drawDangerZones(userLoc);
+showSafePlaces(userLoc[0], userLoc[1]);
+
+
+  map.on('click', e => {
+  const { lat, lng } = e.latlng;
+document.getElementById("destination").value =
+  `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+  if (destinationMarker) {
+    map.removeLayer(destinationMarker);
+  }
+
+  destinationMarker = L.marker([lat, lng])
+    .addTo(map)
+    .bindPopup("Destination selected")
+    .openPopup();
+
+
+  statusBox.style.display = "block";
+  statusBox.innerHTML = `
+    📍 <b>Destination selected</b><br>
+    Latitude: ${lat.toFixed(5)}<br>
+    Longitude: ${lng.toFixed(5)}<br>
+    Click <b>Simulate route</b> to analyze safety
+  `;
+});
+    }); // end geolocation.getCurrentPosition
+  } // end if (navigator.geolocation)
+} // ✅ END initMap()
+
+
+function showSafePlaces(lat, lng) {
+  SAFE_PLACES.forEach(p => {
+    const pos = [
+      lat + p.offset[0],
+      lng + p.offset[1]
+    ];
+
+    L.marker(pos, {
+      icon: L.divIcon({
+        html: `<div style="font-size:20px">${p.icon}</div>`,
+        className: ""
+      })
+    })
+    .addTo(map)
+    .bindPopup(`<b>${p.type}</b><br>Verified safe location`);
+  });
+}
+
+
+
+// Simulated AI danger zones
+
+
+
+  
+function triggerSOS() {
+  statusBox.style.display = "block";
+  statusBox.innerHTML = `
+    🚨 <b style="font-size:15px">EMERGENCY SOS ACTIVATED</b><br>
+    Location shared with emergency contacts.<br>
+    Nearby responders alerted.<br>
+    <span style="color:#ff5c7a; font-weight:600">Do not close this app</span>
+  `;
+
+  document.body.style.animation = "sosFlash 1s infinite";
+
+  const beep = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
+  beep.loop = true;
+  beep.play();
+
+  setTimeout(() => {
+    document.body.style.animation = "";
+    beep.pause();
+  }, 10000);
+}
+
+
+
+
+// Button actions (clean UI version)
+document.querySelectorAll(".callouts .btn").forEach(btn => {
+
+  if (btn.textContent.includes("Simulate route")) {
+    btn.onclick = () => {
+      if (!userMarker) return;
+      const pos = userMarker.getLatLng();
+      simulateRoute([pos.lat, pos.lng]);
+    };
+  }
+
+  if (btn.textContent.includes("Share live location")) {
+    btn.onclick = () => {
+      if (!navigator.geolocation) {
+        statusBox.style.display = "block";
+        statusBox.textContent = "Geolocation not supported.";
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude.toFixed(5);
+        const lng = pos.coords.longitude.toFixed(5);
+
+        statusBox.style.display = "block";
+        statusBox.innerHTML = `
+          📡 <b>Live location sharing active</b><br>
+          Latitude: ${lat}<br>
+          Longitude: ${lng}<br>
+          Status: <span style="color:#35d07f">Connected</span>
+        `;
+      });
+    };
+  }
+
+  if (btn.textContent.includes("One-click SOS")) {
+  btn.onclick = triggerSOS;
+}
+});
+
+
+function simulateRoute(start) {
+  if (!destinationMarker) {
+    statusBox.style.display = "block";
+    statusBox.innerHTML = "⚠️ Please select a destination on the map first.";
+    return;
+  }
+
+  const dest = destinationMarker.getLatLng();
+
+  const directRoute = [
+    start,
+    [ (start[0] + dest.lat) / 2, (start[1] + dest.lng) / 2 ],
+    [ dest.lat, dest.lng ]
+  ];
+
+  const safeRoute = [
+    start,
+    [ start[0] + 0.01, start[1] - 0.01 ],
+    [ dest.lat, dest.lng ]
+  ];
+
+  // remove old routes
+  if (window.riskyLine) map.removeLayer(window.riskyLine);
+  if (window.safeLine) map.removeLayer(window.safeLine);
+
+  // draw routes
+  window.riskyLine = L.polyline(directRoute, {
+    color: '#ff5c7a',
+    weight: 4,
+    dashArray: '6,6'
+  }).addTo(map);
+
+  window.safeLine = L.polyline(safeRoute, {
+    color: '#35d07f',
+    weight: 5
+  }).addTo(map);
+
+  // calculate risks
+  const riskyScore = routeRiskScore(window.riskyLine);
+  const safeScore = routeRiskScore(window.safeLine);
+
+  const diff = riskyScore - safeScore;
+
+const chosen =
+  diff > 15
+    ? "🟢 Much safer alternative available"
+    : diff > 5
+    ? "🟡 Slightly safer alternative"
+    : "⚠️ Both routes have similar risk";
+
+
+  map.fitBounds(
+    L.featureGroup([window.riskyLine, window.safeLine]).getBounds(),
+    { padding: [30, 30] }
+  );
+
+  statusBox.style.display = "block";
+  statusBox.innerHTML = `
+    🧠 <b>Route Comparison</b><br>
+    🔴 Direct route risk: ${riskyScore}%<br>
+    🟢 Safer route risk: ${safeScore}%<br><br>
+    <b>${chosen}</b>
+  `;
+}
+
+
+// Start map
+window.addEventListener("load", initMap);
+
+
+  </script>
+</body>
+</html>
